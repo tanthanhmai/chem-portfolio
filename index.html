@@ -2,39 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Professional Chemistry Portfolio</title>
-    <script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
+    <title>Professional Virtual Screening Hub</title>
+    <script src="https://unpkg.com/@rdkit/rdkit@1.1.0/dist/RDKit_minimal.js"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; background: #f8fafc; }
-        #sidebar { width: 260px; background: var(--primary); color: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-        #main { flex: 1; display: flex; flex-direction: column; background: white; }
-        .header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-        #table-area { flex: 1; overflow-y: auto; padding: 20px; }
+        :root { --primary: #1e293b; --accent: #3b82f6; --bg: #f8fafc; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: #334155; }
+        #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: bold; color: var(--accent); flex-direction: column; }
+        #loader span { font-size: 0.9rem; color: #64748b; margin-top: 10px; font-weight: normal; }
+        #sidebar { width: 260px; background: var(--primary); color: white; padding: 20px; }
+        #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 20px 30px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: white; }
+        #table-area { flex: 1; overflow-y: auto; padding: 20px; background: white; border-right: 1px solid #e2e8f0; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; position: sticky; top: 0; color: #64748b; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; position: sticky; top: 0; color: #64748b; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         tr:hover { background: #eff6ff; }
-        #viewer { width: 420px; background: #fcfcfc; border-left: 1px solid #e2e8f0; padding: 30px; display: flex; flex-direction: column; align-items: center; }
-        .mol-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; text-align: center; }
-        canvas { width: 100%; height: auto; border-radius: 8px; margin-bottom: 20px; }
-        .badge { background: #eef2ff; color: #4f46e5; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; justify-content:center; align-items:center; z-index:9999; font-weight:bold; color: var(--primary); }
+        #viewer { width: 420px; background: #f8fafc; padding: 25px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+        .mol-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; text-align: center; }
+        canvas { width: 100%; height: auto; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; }
+        .btn-export { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
 
-<div id="loading-overlay">⚙️ Loading RDKit Scientific Engine...</div>
+<div id="loader">
+    <div>⚙️ Loading RDKit Scientific Engine...</div>
+    <span>Downloading WebAssembly Core (approx. 2MB)</span>
+</div>
 
-<aside id="sidebar">
-    <h2 style="font-size: 1.2rem; border-bottom: 1px solid #3e4f5f; padding-bottom: 10px;">PROJECTS</h2>
-    <div style="padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; cursor:pointer;">Virtual Screening Alpha</div>
-</aside>
+<div id="sidebar">
+    <h2 style="font-size: 1.2rem; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-top:0;">DASHBOARD</h2>
+    <div style="padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; margin-top: 15px;">Target Project A</div>
+</div>
 
-<main id="main">
+<div id="main">
     <div class="header">
-        <h2 style="margin:0; color: var(--primary);">Hits Dashboard</h2>
-        <button onclick="exportCSV()" style="padding:8px 16px; background:var(--accent); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Export CSV</button>
+        <h2 style="margin:0; font-size: 1.4rem;">Top Binding Hits</h2>
+        <button class="btn-export" onclick="exportCSV()">Download CSV</button>
     </div>
     <div id="table-area">
         <table>
@@ -49,84 +53,100 @@
             <tbody id="hits-table"></tbody>
         </table>
     </div>
-</main>
+</div>
 
-<aside id="viewer">
+<div id="viewer">
     <div class="mol-card">
-        <h3 id="mol-id" style="margin-top:0;">Select a Molecule</h3>
-        <canvas id="mol-canvas" width="400" height="400"></canvas>
-        <div id="mol-details" style="text-align: left; font-size: 14px; color: #444;"></div>
+        <h3 id="mol-id" style="margin-top:0; color:var(--primary);">Select Hit</h3>
+        <canvas id="mol-canvas" width="350" height="350"></canvas>
+        <div id="mol-details" style="text-align: left; font-size: 14px; color: #475569; line-height: 1.6;"></div>
     </div>
-</aside>
+</div>
 
 <script>
     let RDKitModule;
-    const hits = [];
-    const smiles = ["Cc1ccccc1", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", "CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1O", "O=C(O)c1ccccc1"];
     
-    // Tạo 50 hits mẫu
+    // Dữ liệu mẫu (Gồm 50 cấu trúc chuyên nghiệp)
+    const hits = [];
+    const smilesSamples = [
+        "c1ccccc1", // Benzene
+        "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", // Caffeine
+        "CC(=O)Oc1ccccc1C(=O)O", // Aspirin
+        "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C", // Testosterone
+        "C1CN(CCN1)Cc2ccc(cc2)C(=O)O" // Random Drug-like
+    ];
     for(let i=1; i<=50; i++) {
         hits.push({
-            id: "HIT-" + String(i).padStart(3, '0'),
-            smiles: smiles[i % 5],
-            energy: (-8.0 - (Math.random() * 3)).toFixed(2)
+            id: "HIT_" + String(i).padStart(3, '0'),
+            smiles: smilesSamples[i % 5],
+            energy: (-9.0 - (Math.random() * 2)).toFixed(2)
         });
     }
 
-    // KHỞI TẠO RDKIT
-    window.initRDKitModule().then(function(instance) {
+    // KHỞI TẠO RDKIT VỚI ĐƯỜNG DẪN CỨNG (VÁ LỖI)
+    window.initRDKitModule({
+        locateFile: function(path) {
+            // Ép trình duyệt tải file WASM từ đúng server của RDKit
+            if(path.endsWith('.wasm')) {
+                return 'https://unpkg.com/@rdkit/rdkit@1.1.0/dist/RDKit_minimal.wasm';
+            }
+            return path;
+        }
+    }).then(function(instance) {
         RDKitModule = instance;
-        console.log("RDKit version: " + RDKitModule.version());
-        document.getElementById('loading-overlay').style.display = 'none';
-        renderApp();
-    }).catch(err => {
-        document.getElementById('loading-overlay').innerHTML = "❌ Failed to load RDKit engine. Please use Chrome/Edge.";
+        document.getElementById('loader').style.display = 'none';
+        renderTable();
+    }).catch(function(err) {
+        document.getElementById('loader').innerHTML = "❌ RDKit Engine Failed. Mạng của bạn có thể đang chặn WebAssembly.";
         console.error(err);
     });
 
-    function renderApp() {
+    function renderTable() {
         const tbody = document.getElementById('hits-table');
         hits.forEach(hit => {
             const mol = RDKitModule.get_mol(hit.smiles);
-            const descriptors = JSON.parse(mol.get_descriptors());
+            const desc = JSON.parse(mol.get_descriptors());
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><span class="badge">${hit.id}</span></td>
-                <td><b>${hit.energy}</b></td>
-                <td>${descriptors.amw.toFixed(1)}</td>
-                <td>${descriptors.MolLogP.toFixed(2)}</td>
+                <td><b>${hit.id}</b></td>
+                <td style="color:#ef4444; font-weight:bold;">${hit.energy}</td>
+                <td>${desc.amw.toFixed(1)}</td>
+                <td>${desc.MolLogP.toFixed(2)}</td>
             `;
-            tr.onclick = () => showMolecule(hit, descriptors);
+            tr.onclick = () => showMol(hit, desc);
             tbody.appendChild(tr);
             mol.delete();
         });
-        // Hiển thị cái đầu tiên
-        showMolecule(hits[0], JSON.parse(RDKitModule.get_mol(hits[0].smiles).get_descriptors()));
+        
+        // Render phân tử đầu tiên
+        showMol(hits[0], JSON.parse(RDKitModule.get_mol(hits[0].smiles).get_descriptors()));
     }
 
-    function showMolecule(hit, desc) {
+    function showMol(hit, desc) {
         document.getElementById('mol-id').innerText = hit.id;
         const canvas = document.getElementById('mol-canvas');
         const mol = RDKitModule.get_mol(hit.smiles);
         
-        // Cấu hình vẽ chuyên nghiệp của RDKit
-        const drawingDetails = {
-            width: 400,
-            height: 400,
-            bondLineWidth: 2, // Làm nét vẽ đậm hơn
+        // Setting chuẩn bài báo cho RDKit (Nét đậm, rõ ràng)
+        const renderOpts = {
+            width: 350,
+            height: 350,
+            bondLineWidth: 1.8,
+            multipleBondOffset: 0.2,
             addStereoAnnotation: true,
-            isSubstructureHighlight: true
+            clearBackground: false
         };
         
-        mol.draw_to_canvas_with_highlights(canvas, JSON.stringify(drawingDetails));
+        mol.draw_to_canvas_with_highlights(canvas, JSON.stringify(renderOpts));
         mol.delete();
 
         document.getElementById('mol-details').innerHTML = `
-            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-            <p><b>Affinity:</b> ${hit.energy} kcal/mol</p>
-            <p><b>MW:</b> ${desc.amw.toFixed(2)} | <b>LogP:</b> ${desc.MolLogP.toFixed(2)}</p>
-            <p><b>HBD/HBA:</b> ${desc.NumHDonors}/${desc.NumHAcceptors}</p>
+            <hr style="border:0; border-top:1px dashed #cbd5e1; margin:15px 0;">
+            <div><b>Affinity:</b> ${hit.energy} kcal/mol</div>
+            <div style="margin-top:5px;"><b>Mol Weight:</b> ${desc.amw.toFixed(2)}</div>
+            <div style="margin-top:5px;"><b>LogP:</b> ${desc.MolLogP.toFixed(2)}</div>
+            <div style="margin-top:5px; word-break: break-all; font-size: 11px; color:#94a3b8;"><b>SMILES:</b> ${hit.smiles}</div>
         `;
     }
 
@@ -134,9 +154,10 @@
         let csv = "ID,SMILES,Energy\n";
         hits.forEach(h => csv += `${h.id},${h.smiles},${h.energy}\n`);
         const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = "Virtual_Screening_Results.csv"; a.click();
+        a.href = URL.createObjectURL(blob);
+        a.download = "Virtual_Screening_Results.csv";
+        a.click();
     }
 </script>
 
