@@ -2,232 +2,182 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cheminformatics Hits Hub | Virtual Screening Portfolio</title>
+    <title>Cheminformatics Hits Hub</title>
     <script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
     <style>
-        :root { --bg: #f8f9fa; --sidebar: #1e293b; --accent: #3b82f6; --text-main: #334155; --white: #ffffff; }
-        body { font-family: 'Inter', system-ui, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text-main); }
-        
-        /* Sidebar Navigation */
-        .sidebar { width: 280px; background: var(--sidebar); color: white; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 25px; background: #0f172a; font-size: 1.2rem; font-weight: 700; letter-spacing: 1px; border-bottom: 1px solid #334155; }
-        .project-list { flex-grow: 1; overflow-y: auto; padding: 15px; }
-        .project-item { padding: 12px 15px; margin-bottom: 8px; cursor: pointer; border-radius: 8px; transition: all 0.2s; font-size: 0.9rem; opacity: 0.8; }
-        .project-item:hover { background: #334155; opacity: 1; }
-        .project-item.active { background: var(--accent); opacity: 1; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
-
-        /* Main Viewport */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .header-bar { padding: 20px 30px; background: var(--white); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-        .controls { display: flex; gap: 10px; align-items: center; }
-        
-        .content-layout { display: flex; flex-grow: 1; overflow: hidden; }
-
-        /* Data Table Section */
-        .table-area { flex: 1; padding: 20px; overflow-y: auto; background: var(--white); border-right: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { position: sticky; top: -20px; background: #f1f5f9; padding: 12px; font-size: 0.85rem; text-transform: uppercase; cursor: pointer; color: #64748b; border-bottom: 2px solid #e2e8f0; }
-        th:hover { color: var(--accent); }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
-        tr:hover { background: #eff6ff; cursor: pointer; }
-
-        /* Molecule Inspector Panel */
-        .inspector { width: 420px; background: #fcfcfc; padding: 25px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-        .mol-viewer-card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; }
-        #molCanvas { background: white; border: 1px solid #f1f5f9; border-radius: 8px; margin-bottom: 20px; width: 100%; }
-        
-        /* Stats Grid */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-        .stat-box { background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .stat-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; }
-        .stat-value { font-size: 1rem; font-weight: 600; color: #1e293b; margin-top: 4px; }
-
-        /* UI Elements */
-        .input-filter { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 180px; outline: none; }
-        .input-filter:focus { border-color: var(--accent); }
-        .btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
-        .btn-csv { background: #10b981; color: white; }
-        .btn-sdf { background: #6366f1; color: white; }
-        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        :root { --sidebar: #1e293b; --accent: #3b82f6; --bg: #f8f9fa; }
+        body { font-family: sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        .sidebar { width: 250px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; }
+        .main { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: white; }
+        .header { padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .container { display: flex; flex-grow: 1; overflow: hidden; }
+        .table-wrap { flex: 1; overflow-y: auto; padding: 20px; border-right: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; cursor: pointer; position: sticky; top: 0; }
+        td { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+        tr:hover { background: #f0f7ff; }
+        .viewer { width: 400px; padding: 20px; display: flex; flex-direction: column; align-items: center; background: #fafafa; }
+        canvas { border: 1px solid #ddd; background: white; border-radius: 8px; margin-bottom: 15px; width: 100%; }
+        .project-item { padding: 10px; cursor: pointer; border-radius: 4px; margin-bottom: 5px; background: rgba(255,255,255,0.1); }
+        .project-item:hover { background: var(--accent); }
+        .active { background: var(--accent) !important; font-weight: bold; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .stat-box { background: white; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .loading { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; display: flex; justify-content: center; align-items: center; z-index: 100; font-weight: bold; }
     </style>
 </head>
 <body>
 
+<div id="loader" class="loading">Loading RDKit Engine... Please wait...</div>
+
 <aside class="sidebar">
-    <div class="sidebar-header">HTS EXPLORER</div>
-    <div id="projectList" class="project-list"></div>
+    <h2>Projects</h2>
+    <div id="projectButtons"></div>
 </aside>
 
-<main class="main-content">
-    <header class="header-bar">
-        <div>
-            <h2 id="projectTitle" style="margin:0; font-size: 1.4rem;">Select a Campaign</h2>
-            <small id="hitCount" style="color: #64748b;"></small>
+<main class="main">
+    <div class="header">
+        <h1 id="title" style="margin:0; font-size: 1.5rem;">Select a Project</h1>
+        <div id="controls">
+            <button onclick="downloadCSV()" style="padding:8px; cursor:pointer;">Download CSV</button>
         </div>
-        <div class="controls">
-            <input type="number" id="energyFilter" class="input-filter" placeholder="Max Affinity (e.g. -8.5)" step="0.1">
-            <button class="btn btn-csv" onclick="download('csv')">Export CSV</button>
-            <button class="btn btn-sdf" onclick="download('sdf')">Export SDF</button>
-        </div>
-    </header>
-    
-    <section class="content-layout">
-        <div class="table-area">
-            <table id="hitsTable">
+    </div>
+    <div class="container">
+        <div class="table-wrap">
+            <table>
                 <thead>
                     <tr>
-                        <th onclick="applySort('id')">Compound ID ↕</th>
-                        <th onclick="applySort('energy')">Affinity ↕</th>
-                        <th onclick="applySort('mw')">MW ↕</th>
-                        <th onclick="applySort('logp')">LogP ↕</th>
-                        <th>HBD/HBA</th>
+                        <th onclick="sortData('id')">ID ↕</th>
+                        <th onclick="sortData('energy')">Affinity ↕</th>
+                        <th>MW</th>
+                        <th>LogP</th>
                     </tr>
                 </thead>
-                <tbody id="hitsBody"></tbody>
+                <tbody id="tableBody"></tbody>
             </table>
         </div>
-
-        <aside class="inspector" id="inspectorPanel" style="visibility: hidden;">
-            <div class="mol-viewer-card">
-                <h3 id="view-id" style="margin-top:0; color:var(--sidebar)">ID</h3>
-                <canvas id="molCanvas" width="350" height="350"></canvas>
-                <div class="stats-grid" id="view-stats"></div>
-            </div>
-        </aside>
-    </section>
+        <div class="viewer">
+            <h3 id="molId">Compound Details</h3>
+            <canvas id="molCanvas" width="350" height="350"></canvas>
+            <div class="stats" id="molStats"></div>
+        </div>
+    </div>
 </main>
 
 <script>
     let RDKit;
-    let currentProjectData = [];
-    let sortConfig = { key: 'energy', asc: true };
-
-    // --- 1. MOCK DATA GENERATOR (Simulating 50 Hits) ---
-    function generateMockData(prefix) {
-        const scaffolds = [
-            "c1ccccc1", "C1CCCCC1", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", "CC(=O)Oc1ccccc1C(=O)O",
-            "c1cc(ccc1cc2)C(=O)O", "C1CN(CCN1)Cc2ccc(cc2)C(=O)O", "O=C(O)c1ccccc1O", "CC1(C)CC(C)CC(C)C1"
-        ];
-        let data = [];
-        for(let i=1; i<=50; i++) {
-            let scaffold = scaffolds[Math.floor(Math.random() * scaffolds.length)];
-            data.push({
-                id: `${prefix}_${String(i).padStart(3, '0')}`,
-                smiles: scaffold + (i % 3 === 0 ? "CCC" : i % 2 === 0 ? "Br" : "Cl"),
-                energy: parseFloat((-7.0 - Math.random() * 4).toFixed(2))
-            });
-        }
-        return data;
-    }
-
-    const allCampaigns = {
-        "Kinase_Target_VS": generateMockData("KIN"),
-        "GPCR_Screening_B2": generateMockData("GPCR"),
-        "Protease_Inhibitors": generateMockData("PRO")
+    let currentData = [];
+    
+    // --- 50 SAMPLE HITS DATA ---
+    const rawData = {
+        "Screening_Project_01": [
+            {id: "HIT_01", smiles: "Cc1ccccc1", energy: -9.8},
+            {id: "HIT_02", smiles: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", energy: -9.5},
+            {id: "HIT_03", smiles: "CC(=O)Oc1ccccc1C(=O)O", energy: -8.9},
+            {id: "HIT_04", smiles: "O=C(O)c1ccccc1O", energy: -8.7},
+            {id: "HIT_05", smiles: "c1ccccc1", energy: -8.5},
+            {id: "HIT_06", smiles: "C1CCCCC1", energy: -8.4},
+            {id: "HIT_07", smiles: "CC(C)Cc1ccc(cc1)C(C)C(=O)O", energy: -8.2},
+            {id: "HIT_08", smiles: "CN(C)C(=O)Cc1ccc(cc1)OCC(=O)O", energy: -8.0},
+            {id: "HIT_09", smiles: "c1ccc(cc1)C(=O)N", energy: -7.9},
+            {id: "HIT_10", smiles: "CC(=O)Nc1ccc(cc1)O", energy: -7.8}
+            // (Tôi rút gọn list này cho bài chat, nhưng trong file của bạn có thể paste 50 dòng tương tự)
+        ]
     };
 
-    // --- 2. INITIALIZATION ---
-    window.initRDKitModule().then(instance => {
-        RDKit = instance;
-        initSidebar();
-    });
-
-    function initSidebar() {
-        const list = document.getElementById('projectList');
-        Object.keys(allCampaigns).forEach(name => {
-            const div = document.createElement('div');
-            div.className = 'project-item';
-            div.innerText = name.replace(/_/g, ' ');
-            div.onclick = () => switchProject(name, div);
-            list.appendChild(div);
+    // Tạo thêm 40 dòng giả lập nhanh chóng để đủ 50
+    for(let i=11; i<=50; i++) {
+        rawData["Screening_Project_01"].push({
+            id: "HIT_" + i,
+            smiles: "C1=CC=C(C=C1)Cl",
+            energy: parseFloat((-7.0 - (i/10)).toFixed(2))
         });
     }
 
-    // --- 3. CORE LOGIC ---
-    function switchProject(name, element) {
-        document.querySelectorAll('.project-item').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-        document.getElementById('projectTitle').innerText = name.replace(/_/g, ' ');
+    window.initRDKitModule().then(instance => {
+        RDKit = instance;
+        document.getElementById('loader').style.display = 'none';
+        initApp();
+    }).catch(err => {
+        document.getElementById('loader').innerText = "Failed to load RDKit. Please refresh.";
+    });
 
-        // Process molecules with RDKit
-        currentProjectData = allCampaigns[name].map(hit => {
-            const mol = RDKit.get_mol(hit.smiles);
+    function initApp() {
+        const btnBox = document.getElementById('projectButtons');
+        Object.keys(rawData).forEach(pName => {
+            const div = document.createElement('div');
+            div.className = 'project-item';
+            div.innerText = pName;
+            div.onclick = () => loadProject(pName, div);
+            btnBox.appendChild(div);
+        });
+        // Tự động load dự án đầu tiên
+        if(Object.keys(rawData).length > 0) {
+            btnBox.firstChild.click();
+        }
+    }
+
+    function loadProject(name, el) {
+        document.querySelectorAll('.project-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('title').innerText = name;
+
+        currentData = rawData[name].map(item => {
+            const mol = RDKit.get_mol(item.smiles);
             const desc = JSON.parse(mol.get_descriptors());
             mol.delete();
             return {
-                ...hit,
-                mw: parseFloat(desc.amw.toFixed(1)),
-                logp: parseFloat(desc.MolLogP.toFixed(2)),
+                ...item,
+                mw: desc.amw.toFixed(1),
+                logp: desc.MolLogP.toFixed(2),
                 hbd: desc.NumHDonors,
                 hba: desc.NumHAcceptors
             };
         });
-        renderUI();
+        renderTable();
     }
 
-    function renderUI() {
-        const filterVal = document.getElementById('energyFilter').value;
-        const body = document.getElementById('hitsBody');
-        body.innerHTML = '';
-
-        let filtered = currentProjectData.filter(h => !filterVal || h.energy <= filterVal);
-        filtered.sort((a,b) => (a[sortConfig.key] > b[sortConfig.key] ? 1 : -1) * (sortConfig.asc ? 1 : -1));
-
-        document.getElementById('hitCount').innerText = `Showing ${filtered.length} compounds`;
-
-        filtered.forEach(hit => {
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        currentData.forEach(hit => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><b>${hit.id}</b></td><td>${hit.energy}</td><td>${hit.mw}</td><td>${hit.logp}</td><td>${hit.hbd}/${hit.hba}</td>`;
-            tr.onclick = () => inspectMolecule(hit);
-            body.appendChild(tr);
+            tr.innerHTML = `<td>${hit.id}</td><td>${hit.energy}</td><td>${hit.mw}</td><td>${hit.logp}</td>`;
+            tr.onclick = () => drawMolecule(hit);
+            tbody.appendChild(tr);
         });
+        // Hiện phân tử đầu tiên
+        if(currentData.length > 0) drawMolecule(currentData[0]);
     }
 
-    function inspectMolecule(hit) {
-        document.getElementById('inspectorPanel').style.visibility = 'visible';
-        document.getElementById('view-id').innerText = hit.id;
-        
+    function drawMolecule(hit) {
+        document.getElementById('molId').innerText = hit.id;
         const canvas = document.getElementById('molCanvas');
         const mol = RDKit.get_mol(hit.smiles);
-        mol.draw_to_canvas_with_highlights(canvas, JSON.stringify({width: 350, height: 350, bondLineWidth: 1.5}));
+        mol.draw_to_canvas(canvas, 350, 350);
         mol.delete();
 
-        const stats = [
-            {label: "Mol Weight", val: hit.mw}, {label: "LogP", val: hit.logp},
-            {label: "H-Donors", val: hit.hbd}, {label: "H-Acceptors", val: hit.hba}
-        ];
-        document.getElementById('view-stats').innerHTML = stats.map(s => `
-            <div class="stat-box">
-                <div class="stat-label">${s.label}</div>
-                <div class="stat-value">${s.val}</div>
-            </div>
-        `).join('');
+        document.getElementById('molStats').innerHTML = `
+            <div class="stat-box"><b>MW:</b> ${hit.mw}</div>
+            <div class="stat-box"><b>LogP:</b> ${hit.logp}</div>
+            <div class="stat-box"><b>HBD:</b> ${hit.hbd}</div>
+            <div class="stat-box"><b>HBA:</b> ${hit.hba}</div>
+        `;
     }
 
-    // --- 4. UTILITIES ---
-    function applySort(key) {
-        if (sortConfig.key === key) sortConfig.asc = !sortConfig.asc;
-        else { sortConfig.key = key; sortConfig.asc = true; }
-        renderUI();
+    function sortData(key) {
+        currentData.sort((a,b) => a[key] - b[key]);
+        renderTable();
     }
 
-    document.getElementById('energyFilter').addEventListener('input', renderUI);
-
-    function download(format) {
-        let content = "";
-        let mime = "text/plain";
-        if(format === 'csv') {
-            content = "Compound_ID,SMILES,Affinity,MW,LogP\n" + currentProjectData.map(d => `${d.id},${d.smiles},${d.energy},${d.mw},${d.logp}`).join("\n");
-            mime = "text/csv";
-        } else {
-            content = currentProjectData.map(d => `${d.smiles}\n  RDKIT\n\n 0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n> <ID>\n${d.id}\n\n> <Affinity>\n${d.energy}\n\n$$$$`).join("\n");
-        }
-        const blob = new Blob([content], {type: mime});
-        const url = URL.createObjectURL(blob);
+    function downloadCSV() {
+        let csv = "ID,SMILES,Energy,MW,LogP\n";
+        currentData.forEach(d => { csv += `${d.id},${d.smiles},${d.energy},${d.mw},${d.logp}\n`; });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Project_Data.${format}`;
+        a.download = "hits_data.csv";
         a.click();
     }
 </script>
