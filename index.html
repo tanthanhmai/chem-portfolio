@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Professional Virtual Screening Hub</title>
-    <script src="https://unpkg.com/@rdkit/rdkit@1.1.0/dist/RDKit_minimal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
     <style>
         :root { --primary: #1e293b; --accent: #3b82f6; --bg: #f8fafc; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: #334155; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: #334155; }
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: bold; color: var(--accent); flex-direction: column; }
         #loader span { font-size: 0.9rem; color: #64748b; margin-top: 10px; font-weight: normal; }
         #sidebar { width: 260px; background: var(--primary); color: white; padding: 20px; }
@@ -14,11 +14,11 @@
         .header { padding: 20px 30px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: white; }
         #table-area { flex: 1; overflow-y: auto; padding: 20px; background: white; border-right: 1px solid #e2e8f0; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; position: sticky; top: 0; color: #64748b; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; position: sticky; top: 0; color: #64748b; text-transform: uppercase; font-size: 12px; border-bottom: 2px solid #e2e8f0; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
         tr:hover { background: #eff6ff; }
         #viewer { width: 420px; background: #f8fafc; padding: 25px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-        .mol-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; text-align: center; }
+        .mol-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; text-align: center; }
         canvas { width: 100%; height: auto; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; }
         .btn-export { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
@@ -26,26 +26,26 @@
 <body>
 
 <div id="loader">
-    <div>⚙️ Loading RDKit Scientific Engine...</div>
-    <span>Downloading WebAssembly Core (approx. 2MB)</span>
+    <div id="loader-text">⚙️ Tải động cơ RDKit (jsDelivr)...</div>
+    <span id="loader-sub">Đang kéo file WASM (2MB) - Vui lòng đợi</span>
 </div>
 
 <div id="sidebar">
     <h2 style="font-size: 1.2rem; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-top:0;">DASHBOARD</h2>
-    <div style="padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; margin-top: 15px;">Target Project A</div>
+    <div style="padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; margin-top: 15px;">Dự án Demo</div>
 </div>
 
 <div id="main">
     <div class="header">
         <h2 style="margin:0; font-size: 1.4rem;">Top Binding Hits</h2>
-        <button class="btn-export" onclick="exportCSV()">Download CSV</button>
+        <button class="btn-export">Download CSV</button>
     </div>
     <div id="table-area">
         <table>
             <thead>
                 <tr>
                     <th>Compound ID</th>
-                    <th>Affinity (kcal/mol)</th>
+                    <th>Affinity</th>
                     <th>MW</th>
                     <th>LogP</th>
                 </tr>
@@ -57,7 +57,7 @@
 
 <div id="viewer">
     <div class="mol-card">
-        <h3 id="mol-id" style="margin-top:0; color:var(--primary);">Select Hit</h3>
+        <h3 id="mol-id" style="margin-top:0; color:var(--primary);">Chọn Phân tử</h3>
         <canvas id="mol-canvas" width="350" height="350"></canvas>
         <div id="mol-details" style="text-align: left; font-size: 14px; color: #475569; line-height: 1.6;"></div>
     </div>
@@ -65,40 +65,35 @@
 
 <script>
     let RDKitModule;
-    
-    // Dữ liệu mẫu (Gồm 50 cấu trúc chuyên nghiệp)
-    const hits = [];
-    const smilesSamples = [
-        "c1ccccc1", // Benzene
-        "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", // Caffeine
-        "CC(=O)Oc1ccccc1C(=O)O", // Aspirin
-        "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C", // Testosterone
-        "C1CN(CCN1)Cc2ccc(cc2)C(=O)O" // Random Drug-like
+    const hits = [
+        { id: "HIT_001", smiles: "c1ccccc1", energy: -9.2 },
+        { id: "HIT_002", smiles: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", energy: -8.8 },
+        { id: "HIT_003", smiles: "CC(=O)Oc1ccccc1C(=O)O", energy: -8.5 },
+        { id: "HIT_004", smiles: "C1CN(CCN1)Cc2ccc(cc2)C(=O)O", energy: -7.9 },
+        { id: "HIT_005", smiles: "O=C(O)c1ccccc1O", energy: -7.4 }
     ];
-    for(let i=1; i<=50; i++) {
-        hits.push({
-            id: "HIT_" + String(i).padStart(3, '0'),
-            smiles: smilesSamples[i % 5],
-            energy: (-9.0 - (Math.random() * 2)).toFixed(2)
-        });
-    }
 
-    // KHỞI TẠO RDKIT VỚI ĐƯỜNG DẪN CỨNG (VÁ LỖI)
-    window.initRDKitModule({
-        locateFile: function(path) {
-            // Ép trình duyệt tải file WASM từ đúng server của RDKit
-            if(path.endsWith('.wasm')) {
-                return 'https://unpkg.com/@rdkit/rdkit@1.1.0/dist/RDKit_minimal.wasm';
-            }
-            return path;
+    // Cài đặt hẹn giờ 10 giây
+    const timeoutHandle = setTimeout(() => {
+        const loaderText = document.getElementById('loader-text');
+        if(loaderText) {
+            loaderText.innerHTML = "❌ RDKit bị treo!";
+            document.getElementById('loader-sub').innerHTML = "Nguyên nhân: Mạng của bạn chặn file .wasm hoặc CDN quá tải. Hãy thử phát Wi-Fi từ điện thoại (4G) sang máy tính để kiểm tra.";
+            document.getElementById('loader').style.color = "red";
         }
-    }).then(function(instance) {
+    }, 10000);
+
+    // Khởi tạo RDKit
+    window.initRDKitModule().then(function(instance) {
+        clearTimeout(timeoutHandle); // Tắt hẹn giờ nếu thành công
         RDKitModule = instance;
         document.getElementById('loader').style.display = 'none';
         renderTable();
     }).catch(function(err) {
-        document.getElementById('loader').innerHTML = "❌ RDKit Engine Failed. Mạng của bạn có thể đang chặn WebAssembly.";
-        console.error(err);
+        clearTimeout(timeoutHandle);
+        document.getElementById('loader-text').innerHTML = "❌ Lỗi khởi tạo RDKit!";
+        document.getElementById('loader-sub').innerHTML = err.toString();
+        document.getElementById('loader').style.color = "red";
     });
 
     function renderTable() {
@@ -106,20 +101,12 @@
         hits.forEach(hit => {
             const mol = RDKitModule.get_mol(hit.smiles);
             const desc = JSON.parse(mol.get_descriptors());
-            
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><b>${hit.id}</b></td>
-                <td style="color:#ef4444; font-weight:bold;">${hit.energy}</td>
-                <td>${desc.amw.toFixed(1)}</td>
-                <td>${desc.MolLogP.toFixed(2)}</td>
-            `;
+            tr.innerHTML = `<td><b>${hit.id}</b></td><td style="color:#ef4444; font-weight:bold;">${hit.energy}</td><td>${desc.amw.toFixed(1)}</td><td>${desc.MolLogP.toFixed(2)}</td>`;
             tr.onclick = () => showMol(hit, desc);
             tbody.appendChild(tr);
             mol.delete();
         });
-        
-        // Render phân tử đầu tiên
         showMol(hits[0], JSON.parse(RDKitModule.get_mol(hits[0].smiles).get_descriptors()));
     }
 
@@ -128,36 +115,16 @@
         const canvas = document.getElementById('mol-canvas');
         const mol = RDKitModule.get_mol(hit.smiles);
         
-        // Setting chuẩn bài báo cho RDKit (Nét đậm, rõ ràng)
-        const renderOpts = {
-            width: 350,
-            height: 350,
-            bondLineWidth: 1.8,
-            multipleBondOffset: 0.2,
-            addStereoAnnotation: true,
-            clearBackground: false
-        };
-        
-        mol.draw_to_canvas_with_highlights(canvas, JSON.stringify(renderOpts));
+        // RDKit chuẩn bài báo
+        mol.draw_to_canvas_with_highlights(canvas, JSON.stringify({ width: 350, height: 350, bondLineWidth: 2.0, multipleBondOffset: 0.2 }));
         mol.delete();
 
         document.getElementById('mol-details').innerHTML = `
             <hr style="border:0; border-top:1px dashed #cbd5e1; margin:15px 0;">
             <div><b>Affinity:</b> ${hit.energy} kcal/mol</div>
-            <div style="margin-top:5px;"><b>Mol Weight:</b> ${desc.amw.toFixed(2)}</div>
-            <div style="margin-top:5px;"><b>LogP:</b> ${desc.MolLogP.toFixed(2)}</div>
-            <div style="margin-top:5px; word-break: break-all; font-size: 11px; color:#94a3b8;"><b>SMILES:</b> ${hit.smiles}</div>
+            <div style="margin-top:5px;"><b>MW:</b> ${desc.amw.toFixed(2)} | <b>LogP:</b> ${desc.MolLogP.toFixed(2)}</div>
+            <div style="margin-top:5px; font-size: 11px; color:#94a3b8; word-break:break-all;"><b>SMILES:</b> ${hit.smiles}</div>
         `;
-    }
-
-    function exportCSV() {
-        let csv = "ID,SMILES,Energy\n";
-        hits.forEach(h => csv += `${h.id},${h.smiles},${h.energy}\n`);
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = "Virtual_Screening_Results.csv";
-        a.click();
     }
 </script>
 
