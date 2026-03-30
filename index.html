@@ -2,33 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Medicinal Chemistry Hits Hub</title>
-    <script src="https://unpkg.com/smiles-drawer@2.0.1/dist/smiles-drawer.min.js"></script>
+    <title>Professional Chemistry Portfolio</title>
+    <script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; display: flex; height: 100vh; margin: 0; background: #f4f7f6; }
-        #sidebar { width: 220px; background: #2c3e50; color: white; padding: 20px; }
-        #main { flex: 1; display: flex; flex-direction: column; background: white; overflow: hidden; }
+        :root { --primary: #2c3e50; --accent: #3498db; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; background: #f8fafc; }
+        #sidebar { width: 260px; background: var(--primary); color: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        #main { flex: 1; display: flex; flex-direction: column; background: white; }
+        .header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         #table-area { flex: 1; overflow-y: auto; padding: 20px; }
-        #viewer { width: 380px; background: #fff; border-left: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; align-items: center; box-shadow: -2px 0 5px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { background: #eee; padding: 10px; text-align: left; position: sticky; top: 0; }
-        td { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
-        tr:hover { background: #f1f9ff; }
-        canvas { background: white; border: 1px solid #eee; border-radius: 8px; width: 300px; height: 300px; }
-        .btn-dl { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; position: sticky; top: 0; color: #64748b; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+        tr:hover { background: #eff6ff; }
+        #viewer { width: 420px; background: #fcfcfc; border-left: 1px solid #e2e8f0; padding: 30px; display: flex; flex-direction: column; align-items: center; }
+        .mol-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; text-align: center; }
+        canvas { width: 100%; height: auto; border-radius: 8px; margin-bottom: 20px; }
+        .badge { background: #eef2ff; color: #4f46e5; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; justify-content:center; align-items:center; z-index:9999; font-weight:bold; color: var(--primary); }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h3>🧪 Projects</h3>
-    <div style="padding:10px; background:rgba(255,255,255,0.1); border-radius:4px;">Virtual Screening 01</div>
-</div>
+<div id="loading-overlay">⚙️ Loading RDKit Scientific Engine...</div>
 
-<div id="main">
-    <div style="padding:15px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin:0">Hit List Dashboard</h2>
-        <button class="btn-dl" onclick="downloadCSV()">Download CSV</button>
+<aside id="sidebar">
+    <h2 style="font-size: 1.2rem; border-bottom: 1px solid #3e4f5f; padding-bottom: 10px;">PROJECTS</h2>
+    <div style="padding:10px; background:rgba(255,255,255,0.1); border-radius:6px; cursor:pointer;">Virtual Screening Alpha</div>
+</aside>
+
+<main id="main">
+    <div class="header">
+        <h2 style="margin:0; color: var(--primary);">Hits Dashboard</h2>
+        <button onclick="exportCSV()" style="padding:8px 16px; background:var(--accent); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Export CSV</button>
     </div>
     <div id="table-area">
         <table>
@@ -36,72 +42,102 @@
                 <tr>
                     <th>Compound ID</th>
                     <th>Affinity (kcal/mol)</th>
-                    <th>SMILES</th>
+                    <th>MW</th>
+                    <th>LogP</th>
                 </tr>
             </thead>
-            <tbody id="tbody"></tbody>
+            <tbody id="hits-table"></tbody>
         </table>
     </div>
-</div>
+</main>
 
-<div id="viewer">
-    <h3 id="mol-id">Select a Compound</h3>
-    <canvas id="output-canvas" width="300" height="300"></canvas>
-    <div id="info" style="margin-top:20px; width:100%; font-size: 14px; line-height: 1.6;"></div>
-</div>
+<aside id="viewer">
+    <div class="mol-card">
+        <h3 id="mol-id" style="margin-top:0;">Select a Molecule</h3>
+        <canvas id="mol-canvas" width="400" height="400"></canvas>
+        <div id="mol-details" style="text-align: left; font-size: 14px; color: #444;"></div>
+    </div>
+</aside>
 
 <script>
-    // 50 Dữ liệu mẫu (Cấu trúc Smiles thật)
+    let RDKitModule;
     const hits = [];
-    const smilesSamples = ["Cc1ccccc1", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", "CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1O", "O=C(O)c1ccccc1"];
+    const smiles = ["Cc1ccccc1", "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", "CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1O", "O=C(O)c1ccccc1"];
+    
+    // Tạo 50 hits mẫu
     for(let i=1; i<=50; i++) {
         hits.push({
-            id: "HIT_" + String(i).padStart(3, '0'),
-            smiles: smilesSamples[i % 5],
-            energy: (-8.0 - (i * 0.04)).toFixed(2)
+            id: "HIT-" + String(i).padStart(3, '0'),
+            smiles: smiles[i % 5],
+            energy: (-8.0 - (Math.random() * 3)).toFixed(2)
         });
     }
 
-    // Khởi tạo trình vẽ
-    let smilesDrawer = new SmilesDrawer.Drawer({ width: 300, height: 300 });
+    // KHỞI TẠO RDKIT
+    window.initRDKitModule().then(function(instance) {
+        RDKitModule = instance;
+        console.log("RDKit version: " + RDKitModule.version());
+        document.getElementById('loading-overlay').style.display = 'none';
+        renderApp();
+    }).catch(err => {
+        document.getElementById('loading-overlay').innerHTML = "❌ Failed to load RDKit engine. Please use Chrome/Edge.";
+        console.error(err);
+    });
 
-    function init() {
-        const tbody = document.getElementById('tbody');
+    function renderApp() {
+        const tbody = document.getElementById('hits-table');
         hits.forEach(hit => {
+            const mol = RDKitModule.get_mol(hit.smiles);
+            const descriptors = JSON.parse(mol.get_descriptors());
+            
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><b>${hit.id}</b></td><td>${hit.energy}</td><td style="color:#666; font-family:monospace; font-size:11px;">${hit.smiles}</td>`;
-            tr.onclick = () => viewHit(hit);
+            tr.innerHTML = `
+                <td><span class="badge">${hit.id}</span></td>
+                <td><b>${hit.energy}</b></td>
+                <td>${descriptors.amw.toFixed(1)}</td>
+                <td>${descriptors.MolLogP.toFixed(2)}</td>
+            `;
+            tr.onclick = () => showMolecule(hit, descriptors);
             tbody.appendChild(tr);
+            mol.delete();
         });
-        // Xem mặc định cái đầu tiên
-        viewHit(hits[0]);
+        // Hiển thị cái đầu tiên
+        showMolecule(hits[0], JSON.parse(RDKitModule.get_mol(hits[0].smiles).get_descriptors()));
     }
 
-    function viewHit(hit) {
+    function showMolecule(hit, desc) {
         document.getElementById('mol-id').innerText = hit.id;
-        document.getElementById('info').innerHTML = `
-            <p><b>Affinity:</b> ${hit.energy} kcal/mol</p>
-            <p><b>SMILES:</b> <span style="word-break: break-all; color: #666;">${hit.smiles}</span></p>
-        `;
+        const canvas = document.getElementById('mol-canvas');
+        const mol = RDKitModule.get_mol(hit.smiles);
         
-        // Vẽ cấu trúc
-        SmilesDrawer.parse(hit.smiles, function(tree) {
-            smilesDrawer.draw(tree, "output-canvas", "light", false);
-        });
+        // Cấu hình vẽ chuyên nghiệp của RDKit
+        const drawingDetails = {
+            width: 400,
+            height: 400,
+            bondLineWidth: 2, // Làm nét vẽ đậm hơn
+            addStereoAnnotation: true,
+            isSubstructureHighlight: true
+        };
+        
+        mol.draw_to_canvas_with_highlights(canvas, JSON.stringify(drawingDetails));
+        mol.delete();
+
+        document.getElementById('mol-details').innerHTML = `
+            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+            <p><b>Affinity:</b> ${hit.energy} kcal/mol</p>
+            <p><b>MW:</b> ${desc.amw.toFixed(2)} | <b>LogP:</b> ${desc.MolLogP.toFixed(2)}</p>
+            <p><b>HBD/HBA:</b> ${desc.NumHDonors}/${desc.NumHAcceptors}</p>
+        `;
     }
 
-    function downloadCSV() {
-        let csv = "ID,Affinity,SMILES\n";
-        hits.forEach(h => { csv += `${h.id},${h.energy},${h.smiles}\n`; });
+    function exportCSV() {
+        let csv = "ID,SMILES,Energy\n";
+        hits.forEach(h => csv += `${h.id},${h.smiles},${h.energy}\n`);
         const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = "Virtual_Screening_Hits.csv";
-        a.click();
+        a.href = url; a.download = "Virtual_Screening_Results.csv"; a.click();
     }
-
-    // Chạy khi trang web tải xong
-    window.onload = init;
 </script>
 
 </body>
