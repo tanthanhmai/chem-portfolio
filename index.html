@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CADD Virtual Screening Portfolio</title>
+    <title>Virtual Screening Hits Hub</title>
     <style>
         :root { --primary: #1e293b; --accent: #0ea5e9; --bg: #f8fafc; --text: #334155; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
@@ -20,24 +20,27 @@
         .img-container { width: 100%; height: 300px; display: flex; justify-content: center; align-items: center; background: white; border-radius: 8px; margin-bottom: 20px; position: relative; }
         img#mol-image { max-width: 100%; max-height: 100%; object-fit: contain; }
         .badge { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 13px; }
+        #error-msg { color: #ef4444; font-weight: bold; padding: 20px; text-align: center; display: none; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2 style="font-size: 1.1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top:0;">Portfolio</h2>
-    <div style="padding:12px 15px; background: rgba(255,255,255,0.1); border-radius:8px; margin-top: 20px; font-weight: 600; border-left: 4px solid var(--accent);">
-        🎯 ZINC Database Hits
+    <h2 style="font-size: 1.1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top:0;">Campaigns</h2>
+    <div id="project-label" style="padding:12px 15px; background: rgba(255,255,255,0.1); border-radius:8px; margin-top: 20px; font-weight: 600; border-left: 4px solid var(--accent);">
+        Loading Project...
     </div>
 </div>
 
 <div id="main">
     <div class="header">
         <div>
-            <h2 style="margin:0; font-size: 1.5rem; color: var(--primary);">Top Virtual Screening Hits</h2>
+            <h2 id="main-title" style="margin:0; font-size: 1.5rem; color: var(--primary);">Virtual Screening Portfolio</h2>
         </div>
     </div>
     
+    <div id="error-msg">❌ Không tìm thấy dữ liệu dự án này. Vui lòng kiểm tra lại đường dẫn.</div>
+
     <div id="table-area">
         <table id="hits-table">
             <thead>
@@ -65,29 +68,52 @@
 </div>
 
 <script>
-    // Dữ liệu mẫu ban đầu (Sau này bạn sẽ thay bằng dữ liệu thật của mình)
-    const hitsData = [
-        { id: "ZINC_001", smiles: "c1ccccc1", energy: -10.5, mw: 78.11, logp: 2.13 },
-        { id: "ZINC_002", smiles: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", energy: -9.8, mw: 194.19, logp: -0.07 },
-        { id: "ZINC_003", smiles: "CC(=O)Oc1ccccc1C(=O)O", energy: -9.2, mw: 180.16, logp: 1.19 },
-        { id: "ZINC_004", smiles: "C1CN(CCN1)Cc2ccc(cc2)C(=O)O", energy: -8.1, mw: 220.27, logp: 0.85 }
-    ];
+    let hitsData = [];
+
+    function loadProjectData() {
+        // 1. Đọc tham số từ URL (ví dụ: ?project=t2dm_hits)
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectName = urlParams.get('project') || 't2dm_hits'; // Mặc định tải t2dm_hits nếu không truyền tham số
+        
+        document.getElementById('project-label').innerText = "🎯 " + projectName.replace(/_/g, ' ').toUpperCase();
+
+        // 2. Tự động tìm nạp file JSON tương ứng trong thư mục data/
+        fetch(`data/${projectName}.json`)
+            .then(response => {
+                if (!response.ok) throw new Error('File not found');
+                return response.json();
+            })
+            .then(data => {
+                hitsData = data;
+                initApp();
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('error-msg').style.display = 'block';
+                document.getElementById('table-area').style.display = 'none';
+            });
+    }
 
     function initApp() {
         const tbody = document.getElementById('table-body');
+        tbody.innerHTML = '';
+
         hitsData.forEach((hit) => {
             const tr = document.createElement('tr');
             tr.id = `row-${hit.id}`;
             tr.innerHTML = `
                 <td><span class="badge">${hit.id}</span></td>
                 <td style="color: #0369a1; font-weight: 700;">${hit.energy}</td>
-                <td>${hit.mw}</td>
-                <td>${hit.logp}</td>
+                <td>${hit.mw || 'N/A'}</td>
+                <td>${hit.logp || 'N/A'}</td>
             `;
             tr.onclick = () => renderMolecule(hit, tr);
             tbody.appendChild(tr);
         });
-        if(hitsData.length > 0) renderMolecule(hitsData[0], document.getElementById(`row-${hitsData[0].id}`));
+
+        if(hitsData.length > 0) {
+            renderMolecule(hitsData[0], document.getElementById(`row-${hitsData[0].id}`));
+        }
     }
 
     function renderMolecule(hit, rowElement) {
@@ -98,8 +124,8 @@
         document.getElementById('mol-details').innerHTML = `
             <hr style="border:0; border-top:1px dashed #cbd5e1; margin:20px 0;">
             <div style="display:flex; justify-content:space-between;"><span><b>Affinity:</b></span><span style="color:var(--accent); font-weight:bold;">${hit.energy} kcal/mol</span></div>
-            <div style="display:flex; justify-content:space-between;"><span><b>MW:</b></span><span>${hit.mw}</span></div>
-            <div style="display:flex; justify-content:space-between;"><span><b>LogP:</b></span><span>${hit.logp}</span></div>
+            <div style="display:flex; justify-content:space-between;"><span><b>MW:</b></span><span>${hit.mw || 'N/A'}</span></div>
+            <div style="display:flex; justify-content:space-between;"><span><b>LogP:</b></span><span>${hit.logp || 'N/A'}</span></div>
             <div style="margin-top:15px;"><b style="font-size:12px; color:#94a3b8;">SMILES:</b><div style="background:#f1f5f9; padding:8px; border-radius:6px; margin-top:5px; font-family:monospace; font-size:11px; word-break:break-all;">${hit.smiles}</div></div>
         `;
 
@@ -114,7 +140,7 @@
         imgEl.src = `https://www.simolecule.com/cdkdepict/depict/bow/svg?smi=${safeSmiles}&w=300&h=300`;
     }
 
-    window.onload = initApp;
+    window.onload = loadProjectData;
 </script>
 
 </body>
