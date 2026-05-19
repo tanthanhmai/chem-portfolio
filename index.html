@@ -1,51 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CADD Virtual Screening Portfolio</title>
+    <style>
+        :root { --primary: #1e293b; --accent: #0ea5e9; --bg: #f8fafc; --text: #334155; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        #sidebar { width: 260px; background: var(--primary); color: white; padding: 25px 20px; z-index: 10; display: flex; flex-direction: column; }
+        #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 20px 30px; border-bottom: 1px solid #e2e8f0; background: white; }
+        #table-area { flex: 1; overflow-y: auto; padding: 20px 30px; background: white; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background: #f1f5f9; padding: 14px 12px; text-align: left; position: sticky; top: 0; color: #64748b; text-transform: uppercase; font-size: 12px; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 14px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+        tr:hover { background: #f0f9ff; }
+        tr.active-row { background: #e0f2fe; border-left: 3px solid var(--accent); }
+        #viewer { width: 400px; background: #f8fafc; padding: 30px; display: flex; flex-direction: column; align-items: center; border-left: 1px solid #e2e8f0; overflow-y: auto;}
+        .mol-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; text-align: center; border: 1px solid #e2e8f0; }
+        img.mol-img { width: 100%; max-width: 350px; height: auto; margin-bottom: 20px; border-radius: 8px; }
+        .badge { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 13px; }
+        #error-msg { color: #ef4444; font-weight: bold; padding: 20px; text-align: center; display: none; }
+        
+        /* CSS mới cho các nút Menu */
+        .menu-item { padding: 12px; border-radius: 8px; margin-top: 10px; cursor: pointer; transition: 0.2s; color: #94a3b8; word-break: break-word; }
+        .menu-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .menu-item.active { background: rgba(255,255,255,0.1); font-weight: 600; border-left: 4px solid var(--accent); color: white; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2 style="margin-top:0; color:#94a3b8; font-size:1.1rem; text-transform:uppercase;">Campaigns</h2>
+    <div id="menu-container">
+        <div class="menu-item active" id="fallback-menu">🎯 Đang tải...</div>
+    </div>
+</div>
+
+<div id="main">
+    <div class="header">
+        <h2 style="margin:0; font-size: 1.5rem; color: var(--primary);">Virtual Screening Portfolio</h2>
+    </div>
+    <div id="error-msg">❌ Không tìm thấy dữ liệu. Hãy kiểm tra lại đường dẫn!</div>
+    <div id="table-area">
+        <table id="hits-table">
+            <thead>
+                <tr id="table-head-row"></tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="viewer">
+    <div class="mol-card">
+        <h3 id="mol-id" style="margin-top:0; color:var(--primary); font-size:1.3rem;">Select a Hit</h3>
+        <img id="mol-image" class="mol-img" src="" alt="Molecule Structure" style="display:none;">
+        <div id="mol-details" style="text-align: left; font-size: 14px; color: #475569; line-height: 1.8;"></div>
+    </div>
+</div>
+
 <script>
     let hitsData = [];
-    
-    // Đọc URL để xem đang ở dự án nào
     const urlParams = new URLSearchParams(window.location.search);
     const currentProject = urlParams.get('project') || 'hitlist_1'; 
 
-    // 1. TẢI MENU TỪ FILE menu.json
+    // 1. TẢI MENU
     fetch('data/menu.json')
         .then(res => {
-            if(!res.ok) throw new Error("Chưa có file menu.json");
+            if(!res.ok) throw new Error("No menu.json");
             return res.json();
         })
         .then(menuItems => {
-            const sidebar = document.getElementById('sidebar');
-            // Giữ lại tiêu đề Campaigns
-            sidebar.innerHTML = '<h2 style="margin-top:0; color:#94a3b8; font-size:1.1rem; text-transform:uppercase;">Campaigns</h2>';
+            const menuContainer = document.getElementById('menu-container');
+            menuContainer.innerHTML = ''; 
             
-            // Vẽ các tab dự án
             menuItems.forEach(item => {
                 const isActive = item.id === currentProject;
-                const tabStyle = isActive 
-                    ? "padding:12px; background:rgba(255,255,255,0.1); border-radius:8px; margin-top:10px; font-weight:600; border-left:4px solid var(--accent); cursor:pointer;"
-                    : "padding:12px; border-radius:8px; margin-top:10px; color:#94a3b8; cursor:pointer; transition:0.2s;";
-                
                 const div = document.createElement('div');
-                div.style.cssText = tabStyle;
+                div.className = 'menu-item' + (isActive ? ' active' : '');
                 div.innerHTML = (isActive ? "🎯 " : "📁 ") + item.name;
                 
-                // Khi click vào tab, tự động tải lại trang với link dự án mới
-                div.onclick = () => { window.location.href = `?project=${item.id}`; };
-                
-                // Hiệu ứng hover cho các tab không active
                 if(!isActive) {
-                    div.onmouseover = () => { div.style.background = "rgba(255,255,255,0.05)"; div.style.color = "white"; };
-                    div.onmouseout = () => { div.style.background = "transparent"; div.style.color = "#94a3b8"; };
+                    div.onclick = () => { window.location.href = '?project=' + item.id; };
                 }
-                
-                sidebar.appendChild(div);
+                menuContainer.appendChild(div);
             });
         })
         .catch(err => {
-            console.log(err);
-            // Backup: Nếu chưa tạo menu.json, vẫn hiển thị nhãn mặc định
-            document.getElementById('project-label').innerText = "🎯 " + currentProject.toUpperCase();
+            // Backup nếu chưa tạo file menu.json
+            document.getElementById('fallback-menu').innerText = "🎯 " + currentProject.toUpperCase();
         });
 
-    // 2. TẢI DỮ LIỆU CỦA DỰ ÁN HIỆN TẠI
+    // 2. TẢI DỮ LIỆU JSON DỰ ÁN
     fetch(`data/${currentProject}.json`)
         .then(res => {
             if (!res.ok) throw new Error('File not found');
@@ -60,7 +106,7 @@
             document.getElementById('table-area').style.display = 'none';
         });
 
-    // 3. KHỞI TẠO BẢNG DỮ LIỆU ĐỘNG (Giữ nguyên như cũ)
+    // 3. VẼ BẢNG
     function initDynamicTable() {
         if(hitsData.length === 0) return;
         
@@ -105,7 +151,7 @@
         renderMolecule(hitsData[0], document.getElementById('row-0'), firstId, headers);
     }
 
-    // 4. HIỂN THỊ CHI TIẾT & ẢNH RDKIT (Giữ nguyên như cũ)
+    // 4. HIỂN THỊ CẤU TRÚC
     function renderMolecule(hit, rowElement, displayId, headers) {
         document.querySelectorAll('tr').forEach(r => r.classList.remove('active-row'));
         if(rowElement) rowElement.classList.add('active-row');
@@ -140,3 +186,6 @@
         document.getElementById('mol-details').innerHTML = detailsHtml;
     }
 </script>
+
+</body>
+</html>
