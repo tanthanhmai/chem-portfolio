@@ -15,3 +15,157 @@
         td { padding: 14px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
         tr:hover { background: #f0f9ff; }
         tr.active-row { background: #e0f2fe; border-left: 3px solid var(--accent); }
+        #viewer { width: 400px; background: #f8fafc; padding: 30px; display: flex; flex-direction: column; align-items: center; border-left: 1px solid #e2e8f0; overflow-y: auto;}
+        .mol-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; text-align: center; border: 1px solid #e2e8f0; }
+        img.mol-img { width: 100%; max-width: 350px; height: auto; margin-bottom: 20px; border-radius: 8px; }
+        .badge { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 13px; }
+        #error-msg { color: #ef4444; font-weight: bold; padding: 20px; text-align: center; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2 style="margin-top:0; color:#94a3b8; font-size:1.1rem; text-transform:uppercase;">Campaigns</h2>
+    <div id="project-label" style="padding:12px; background:rgba(255,255,255,0.1); border-radius:8px; margin-top:20px; font-weight:600; border-left:4px solid var(--accent); word-break: break-all;">
+        Đang tải...
+    </div>
+</div>
+
+<div id="main">
+    <div class="header">
+        <h2 style="margin:0; font-size: 1.5rem; color: var(--primary);">Virtual Screening Portfolio</h2>
+    </div>
+    <div id="error-msg">❌ Không tìm thấy dữ liệu. Hãy kiểm tra lại đường dẫn!</div>
+    <div id="table-area">
+        <table id="hits-table">
+            <thead>
+                <tr id="table-head-row">
+                    </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="viewer">
+    <div class="mol-card">
+        <h3 id="mol-id" style="margin-top:0; color:var(--primary); font-size:1.3rem;">Select a Hit</h3>
+        <img id="mol-image" class="mol-img" src="" alt="Molecule Structure">
+        <div id="mol-details" style="text-align: left; font-size: 14px; color: #475569; line-height: 1.8;"></div>
+    </div>
+</div>
+
+<script>
+    let hitsData = [];
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectName = urlParams.get('project') || 'hitlist_1'; 
+
+    document.getElementById('project-label').innerText = "🎯 " + projectName.replace(/_/g, ' ').toUpperCase();
+
+    fetch(`data/${projectName}.json`)
+        .then(res => {
+            if (!res.ok) throw new Error('File not found');
+            return res.json();
+        })
+        .then(data => {
+            hitsData = data;
+            initDynamicTable();
+        })
+        .catch(err => {
+            document.getElementById('error-msg').style.display = 'block';
+            document.getElementById('table-area').style.display = 'none';
+        });
+
+    function initDynamicTable() {
+        if(hitsData.length === 0) return;
+        
+        // Bỏ qua cột mol_image, id và smiles khi tạo tiêu đề bảng
+        const excludeCols = ['mol_image', 'id', 'smiles'];
+        const headers = ['Compound ID']; // Luôn có cột ID đầu tiên
+        
+        const firstRow = hitsData[0];
+        for(let key in firstRow) {
+            if(!excludeCols.includes(key)) {
+                headers.push(key);
+            }
+        }
+
+        // Tạo phần Header của bảng
+        const theadRow = document.getElementById('table-head-row');
+        headers.forEach(h => {
+            const th = document.createElement('th');
+            th.innerText = h;
+            theadRow.appendChild(th);
+        });
+
+        // Đổ dữ liệu vào bảng
+        const tbody = document.getElementById('table-body');
+        hitsData.forEach((hit, index) => {
+            const tr = document.createElement('tr');
+            tr.id = `row-${index}`;
+            
+            // Xử lý cột ID (Mặc định lấy từ hit.id, nếu không có thì dùng index)
+            const displayId = hit.id || hit.ID || `HIT_${index+1}`;
+            let rowHtml = `<td><span class="badge">${displayId}</span></td>`;
+            
+            // Xử lý các cột còn lại
+            headers.slice(1).forEach(key => {
+                const val = hit[key] !== null && hit[key] !== undefined ? hit[key] : '-';
+                // Highlight nếu cột là energy hoặc score
+                if(key.toLowerCase().includes('energy') || key.toLowerCase().includes('score')) {
+                    rowHtml += `<td style="color:#0369a1; font-weight:700;">${val}</td>`;
+                } else {
+                    rowHtml += `<td>${val}</td>`;
+                }
+            });
+
+            tr.innerHTML = rowHtml;
+            tr.onclick = () => renderMolecule(hit, tr, displayId, headers);
+            tbody.appendChild(tr);
+        });
+
+        // Chọn phân tử đầu tiên mặc định
+        const firstId = hitsData[0].id || hitsData[0].ID || 'HIT_1';
+        renderMolecule(hitsData[0], document.getElementById('row-0'), firstId, headers);
+    }
+
+    function renderMolecule(hit, rowElement, displayId, headers) {
+        document.querySelectorAll('tr').forEach(r => r.classList.remove('active-row'));
+        if(rowElement) rowElement.classList.add('active-row');
+
+        document.getElementById('mol-id').innerText = displayId;
+        
+        // Hiển thị ảnh Base64
+        const imgEl = document.getElementById('mol-image');
+        if(hit.mol_image) {
+            imgEl.src = hit.mol_image;
+            imgEl.style.display = 'block';
+        } else {
+            imgEl.style.display = 'none';
+        }
+        
+        // Sinh chi tiết thông tin tự động
+        let detailsHtml = '<hr style="border:0; border-top:1px dashed #cbd5e1; margin:15px 0;">';
+        headers.slice(1).forEach(key => {
+            const val = hit[key] !== null && hit[key] !== undefined ? hit[key] : '-';
+            detailsHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span style="text-transform:capitalize;"><b>${key}:</b></span>
+                                <span>${val}</span>
+                            </div>`;
+        });
+
+        // Hiển thị SMILES
+        const smilesVal = hit.smiles || hit.SMILES || '';
+        if(smilesVal) {
+            detailsHtml += `<div style="margin-top:15px;"><b style="font-size:12px; color:#94a3b8;">SMILES:</b>
+                            <div style="background:#f1f5f9; padding:8px; border-radius:6px; margin-top:5px; font-family:monospace; font-size:11px; word-break:break-all;">
+                                ${smilesVal}
+                            </div></div>`;
+        }
+
+        document.getElementById('mol-details').innerHTML = detailsHtml;
+    }
+</script>
+
+</body>
+</html>
