@@ -2,67 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CADD Virtual Screening Portfolio</title>
+    <title>CADD Portfolio</title>
     <style>
         :root { --primary: #1e293b; --accent: #0ea5e9; --bg: #f8fafc; --text: #334155; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
         
-        /* Sidebar */
         #sidebar { width: 260px; background: var(--primary); color: white; padding: 25px 20px; z-index: 10; display: flex; flex-direction: column; }
-        .menu-item { padding: 12px; border-radius: 8px; margin-top: 10px; cursor: pointer; transition: 0.2s; color: #94a3b8; word-break: break-word; }
+        .menu-item { padding: 12px; border-radius: 8px; margin-top: 10px; cursor: pointer; transition: 0.2s; color: #94a3b8; }
         .menu-item:hover { background: rgba(255,255,255,0.05); color: white; }
-        .menu-item.active { background: rgba(255,255,255,0.1); font-weight: 600; border-left: 4px solid var(--accent); color: white; pointer-events: none; }
+        .menu-item.active { background: rgba(255,255,255,0.1); font-weight: 600; color: white; border-left: 4px solid var(--accent); }
         
-        /* Main Area & Header */
         #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .header { padding: 20px 30px; border-bottom: 1px solid #e2e8f0; background: white; display: flex; justify-content: space-between; align-items: center; }
+        .header { padding: 20px 30px; background: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
         .header-actions { display: flex; gap: 15px; }
-        .search-bar { padding: 8px 15px; border: 1px solid #cbd5e1; border-radius: 6px; width: 200px; outline: none; transition: 0.2s; }
-        .search-bar:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
-        .btn-export { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-export:hover { background: #0284c7; }
+        .search-bar { padding: 8px 15px; border: 1px solid #cbd5e1; border-radius: 6px; width: 220px; }
+        .btn-export { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 500; }
         
-        /* Table */
         #table-area { flex: 1; overflow-y: auto; padding: 0 30px 20px 30px; background: white; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { background: #f8fafc; padding: 14px 12px; text-align: left; position: sticky; top: 0; color: #64748b; text-transform: uppercase; font-size: 12px; border-bottom: 2px solid #e2e8f0; cursor: pointer; user-select: none; transition: 0.2s; z-index: 2; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        th:hover { background: #e2e8f0; color: var(--primary); }
-        td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; vertical-align: middle; }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 16px 12px; text-align: left; position: sticky; top: 0; color: #64748b; font-size: 13px; border-bottom: 2px solid #e2e8f0; cursor: pointer; background: white; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; vertical-align: middle; }
         tr:hover td { background: #f0f9ff; }
-        tr.active-row td { background: #e0f2fe; border-left: 3px solid var(--accent); }
-        .badge { background: #f1f5f9; color: #475569; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-family: monospace; font-size: 13px; border: 1px solid #e2e8f0;}
-        .thumb-img { width: 70px; height: 70px; object-fit: contain; mix-blend-mode: multiply; }
+        tr.active-row td { background: #e0f2fe; }
         
-        /* Detail Viewer */
-        #viewer { width: 420px; background: #f8fafc; padding: 30px; display: flex; flex-direction: column; align-items: center; border-left: 1px solid #e2e8f0; overflow-y: auto;}
-        .mol-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; text-align: center; border: 1px solid #e2e8f0; position: sticky; top: 0;}
-        img.mol-img { width: 100%; max-width: 350px; height: auto; margin-bottom: 20px; border-radius: 8px; }
-        #error-msg { color: #ef4444; font-weight: bold; padding: 20px; text-align: center; display: none; }
+        .thumb-img { width: 120px; height: 80px; object-fit: contain; mix-blend-mode: multiply; }
+        #viewer { width: 420px; background: #f8fafc; padding: 30px; border-left: 1px solid #e2e8f0; overflow-y: auto; }
+        .mol-card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; }
+        .mol-img { width: 100%; max-width: 350px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2 style="margin-top:0; color:#94a3b8; font-size:1.1rem; text-transform:uppercase; letter-spacing:1px;">Campaigns</h2>
-    <div id="menu-container">
-        <div class="menu-item active" id="fallback-menu">🎯 Đang tải...</div>
-    </div>
+    <h2 style="font-size: 1.1rem; color: #94a3b8; margin-top:0;">Campaigns</h2>
+    <div id="menu-container"></div>
 </div>
 
 <div id="main">
     <div class="header">
-        <h2 style="margin:0; font-size: 1.5rem; color: var(--primary);">Virtual Screening Dashboard</h2>
+        <h2 style="margin:0; font-size: 1.5rem; color: var(--primary);">Hit list</h2>
         <div class="header-actions">
-            <input type="text" id="search-input" class="search-bar" placeholder="🔍 TÌm ID hoặc SMILES..." onkeyup="filterTable()">
-            <button class="btn-export" onclick="exportCSV()">⬇ Tải CSV</button>
+            <input type="text" id="search-input" class="search-bar" placeholder="Search ID or SMILES..." onkeyup="filterTable()">
+            <button class="btn-export" onclick="exportCSV()">Export CSV</button>
         </div>
     </div>
-    <div id="error-msg">❌ Không tìm thấy dữ liệu. Hãy kiểm tra lại đường dẫn!</div>
     <div id="table-area">
         <table id="hits-table">
-            <thead>
-                <tr id="table-head-row"></tr>
-            </thead>
+            <thead><tr id="table-head-row"></tr></thead>
             <tbody id="table-body"></tbody>
         </table>
     </div>
@@ -70,18 +56,14 @@
 
 <div id="viewer">
     <div class="mol-card">
-        <h3 id="mol-id" style="margin-top:0; color:var(--primary); font-size:1.3rem;">Select a Hit</h3>
-        <img id="mol-image" class="mol-img" src="" alt="Molecule Structure" style="display:none;">
-        <div id="mol-details" style="text-align: left; font-size: 14px; color: #475569; line-height: 1.8;"></div>
+        <h3 id="mol-id" style="color:var(--primary);">Select a Hit</h3>
+        <img id="mol-image" class="mol-img" src="" alt="Structure" style="display:none;">
+        <div id="mol-details" style="text-align: left; font-size: 14px; color: #475569;"></div>
     </div>
 </div>
 
 <script>
-    let hitsData = [];
-    let currentHeaders = [];
-    let sortCol = null;
-    let sortAsc = true;
-    
+    let hitsData = [], currentHeaders = [], sortCol = null, sortAsc = true;
     const urlParams = new URLSearchParams(window.location.search);
     const currentProject = urlParams.get('project') || 'hitlist_1'; 
 
@@ -91,223 +73,84 @@
         return val;
     }
 
-    // 1. TẢI MENU
-    fetch('data/menu.json')
-        .then(res => { if(!res.ok) throw new Error("No menu"); return res.json(); })
-        .then(menuItems => {
-            const menuContainer = document.getElementById('menu-container');
-            menuContainer.innerHTML = ''; 
-            menuItems.forEach(item => {
-                const isActive = item.id === currentProject;
-                const div = document.createElement('div');
-                div.className = 'menu-item' + (isActive ? ' active' : '');
-                div.innerHTML = (isActive ? "🎯 " : "📁 ") + item.name;
-                if(!isActive) div.onclick = () => { window.location.href = '?project=' + item.id; };
-                menuContainer.appendChild(div);
-            });
-        }).catch(() => { document.getElementById('fallback-menu').innerText = "🎯 " + currentProject.toUpperCase(); });
-
-    // 2. TẢI DỮ LIỆU
-    fetch(`data/${currentProject}.json`)
-        .then(res => { if (!res.ok) throw new Error('File not found'); return res.json(); })
-        .then(data => {
-            hitsData = data;
-            initDynamicTable();
-        }).catch(() => {
-            document.getElementById('error-msg').style.display = 'block';
-            document.getElementById('table-area').style.display = 'none';
+    fetch('data/menu.json').then(res => res.json()).then(menuItems => {
+        const container = document.getElementById('menu-container');
+        menuItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'menu-item' + (item.id === currentProject ? ' active' : '');
+            div.innerText = item.name;
+            div.onclick = () => window.location.href = '?project=' + item.id;
+            container.appendChild(div);
         });
+    });
 
-    // 3. VẼ BẢNG VÀ TIÊU ĐỀ
-    function initDynamicTable() {
-        if(hitsData.length === 0) return;
-        
-        const excludeCols = ['mol_image', 'id', 'smiles']; 
-        currentHeaders = []; 
-        
-        const firstRow = hitsData[0];
-        for(let key in firstRow) {
-            if(!excludeCols.includes(key.toLowerCase())) currentHeaders.push(key);
-        }
-
+    fetch(`data/${currentProject}.json`).then(res => res.json()).then(data => {
+        hitsData = data;
+        const excludeCols = ['mol_image', 'id', 'smiles'];
+        currentHeaders = Object.keys(data[0]).filter(k => !excludeCols.includes(k.toLowerCase()));
         renderHeaders();
         renderTableBody(hitsData);
-    }
+    });
 
     function renderHeaders() {
-        const theadRow = document.getElementById('table-head-row');
-        theadRow.innerHTML = '';
-        
-        // Cột ID cứng
-        const thId = document.createElement('th');
-        thId.innerText = 'Compound ID' + (sortCol === 'id' ? (sortAsc ? ' ▲' : ' ▼') : '');
-        thId.onclick = () => sortTable('id');
-        theadRow.appendChild(thId);
-
-        // Cột Structure cứng (Không có tính năng sort)
-        const thStruct = document.createElement('th');
-        thStruct.innerText = 'Structure';
-        thStruct.style.cursor = 'default';
-        thStruct.style.textAlign = 'center';
-        theadRow.appendChild(thStruct);
-
-        // Các cột thông số động
+        const row = document.getElementById('table-head-row');
+        row.innerHTML = '<th>ID ' + (sortCol==='id' ? (sortAsc?'▲':'▼') : '↕') + '</th><th>Structure</th>';
         currentHeaders.forEach(h => {
             const th = document.createElement('th');
-            let icon = '';
-            if (sortCol === h) { icon = sortAsc ? ' ▲' : ' ▼'; }
-            th.innerText = h + icon;
+            th.innerText = h + (sortCol===h ? (sortAsc?' ▲':' ▼') : ' ↕');
             th.onclick = () => sortTable(h);
-            theadRow.appendChild(th);
+            row.appendChild(th);
         });
     }
 
-    function renderTableBody(dataToRender) {
-        const tbody = document.getElementById('table-body');
-        tbody.innerHTML = '';
-        
-        dataToRender.forEach((hit, index) => {
+    function renderTableBody(data) {
+        const body = document.getElementById('table-body');
+        body.innerHTML = '';
+        data.forEach((hit, index) => {
             const tr = document.createElement('tr');
-            tr.id = `row-${index}`;
-            
-            let displayId = '';
-            for(let key in hit) { if(key.toLowerCase() === 'id') { displayId = hit[key]; break; } }
-            if(!displayId) displayId = `HIT_${index+1}`;
-            
-            let rowHtml = `<td><span class="badge">${displayId}</span></td>`;
-            
-            // Render cột ảnh thu nhỏ
-            let thumbHtml = hit.mol_image 
-                ? `<img src="${hit.mol_image}" class="thumb-img">` 
-                : `<span style="color:#cbd5e1; font-size:12px;">N/A</span>`;
-            rowHtml += `<td style="text-align:center;">${thumbHtml}</td>`;
-            
-            // Render các cột thông số
-            currentHeaders.forEach(key => {
-                const val = formatNumber(hit[key]);
-                if(key.toLowerCase().includes('energy') || key.toLowerCase().includes('score') || key.toLowerCase().includes('pic50')) {
-                    rowHtml += `<td style="color:#0369a1; font-weight:700;">${val}</td>`;
-                } else {
-                    rowHtml += `<td>${val}</td>`;
-                }
-            });
-
-            tr.innerHTML = rowHtml;
-            tr.onclick = () => renderMolecule(hit, tr, displayId, currentHeaders);
-            tbody.appendChild(tr);
+            tr.onclick = () => renderMolecule(hit, tr);
+            let id = hit.id || hit.ID || `HIT_${index+1}`;
+            let html = `<td><b>${id}</b></td><td>${hit.mol_image ? `<img src="${hit.mol_image}" class="thumb-img">` : '-'}</td>`;
+            currentHeaders.forEach(h => html += `<td>${formatNumber(hit[h])}</td>`);
+            tr.innerHTML = html;
+            body.appendChild(tr);
         });
-
-        if(dataToRender.length > 0) {
-            let firstId = '';
-            for(let key in dataToRender[0]) { if(key.toLowerCase() === 'id') { firstId = dataToRender[0][key]; break; } }
-            if(!firstId) firstId = 'HIT_1';
-            renderMolecule(dataToRender[0], tbody.firstChild, firstId, currentHeaders);
-        }
+        if(data.length > 0) renderMolecule(data[0], body.firstChild);
     }
 
-    // 4. SẮP XẾP BẢNG
     function sortTable(header) {
-        if (sortCol === header) { sortAsc = !sortAsc; } 
-        else { sortCol = header; sortAsc = true; }
-        
-        const sortedData = [...hitsData].sort((a, b) => {
-            let valA = header === 'id' ? (a.id || a.ID || '') : a[header];
-            let valB = header === 'id' ? (b.id || b.ID || '') : b[header];
-            
-            if (!isNaN(valA) && !isNaN(valB)) { return sortAsc ? valA - valB : valB - valA; }
-            valA = valA ? valA.toString().toLowerCase() : '';
-            valB = valB ? valB.toString().toLowerCase() : '';
-            if (valA < valB) return sortAsc ? -1 : 1;
-            if (valA > valB) return sortAsc ? 1 : -1;
-            return 0;
+        sortAsc = (sortCol === header) ? !sortAsc : true;
+        sortCol = header;
+        hitsData.sort((a,b) => {
+            let valA = a[header] || '', valB = b[header] || '';
+            return sortAsc ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
         });
-        
-        renderHeaders();
-        renderTableBody(sortedData);
+        renderHeaders(); renderTableBody(hitsData);
     }
 
-    // 5. TÌM KIẾM
     function filterTable() {
-        const input = document.getElementById('search-input').value.toLowerCase();
-        const filteredData = hitsData.filter(hit => {
-            let displayId = ''; let smiles = '';
-            for(let key in hit) { 
-                if(key.toLowerCase() === 'id') displayId = hit[key]; 
-                if(key.toLowerCase() === 'smiles') smiles = hit[key]; 
-            }
-            return displayId.toString().toLowerCase().includes(input) || smiles.toString().toLowerCase().includes(input);
-        });
-        renderTableBody(filteredData);
+        const q = document.getElementById('search-input').value.toLowerCase();
+        renderTableBody(hitsData.filter(h => (h.id||'').toString().toLowerCase().includes(q)));
     }
 
-    // 6. XUẤT CSV (Lọc bỏ hình ảnh base64 ra khỏi file tải về)
-    function exportCSV() {
-        if(hitsData.length === 0) return;
-        let csvCols = ['Compound ID', ...currentHeaders, 'SMILES'];
-        let csv = csvCols.join(',') + '\n';
-        hitsData.forEach(hit => {
-            let row = [];
-            
-            let displayId = ''; let smiles = '';
-            for(let key in hit) { 
-                if(key.toLowerCase() === 'id') displayId = hit[key]; 
-                if(key.toLowerCase() === 'smiles') smiles = hit[key]; 
-            }
-            row.push(`"${displayId}"`);
-
-            currentHeaders.forEach(header => {
-                row.push(`"${hit[header] !== null && hit[header] !== undefined ? hit[header] : ''}"`);
-            });
-            row.push(`"${smiles}"`);
-            
-            csv += row.join(',') + '\n';
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${currentProject}_export.csv`;
-        link.click();
-    }
-
-    // 7. HIỂN THỊ CHI TIẾT BÊN PHẢI
-    function renderMolecule(hit, rowElement, displayId, headers) {
+    function renderMolecule(hit, tr) {
         document.querySelectorAll('tr').forEach(r => r.classList.remove('active-row'));
-        if(rowElement) rowElement.classList.add('active-row');
+        tr.classList.add('active-row');
+        document.getElementById('mol-id').innerText = hit.id || hit.ID || 'Hit';
+        const img = document.getElementById('mol-image');
+        img.src = hit.mol_image || ''; img.style.display = hit.mol_image ? 'block' : 'none';
+        
+        let det = '<hr style="border:0; border-top:1px solid #e2e8f0; margin:15px 0;">';
+        currentHeaders.forEach(h => det += `<div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span><b>${h}:</b></span><span>${formatNumber(hit[h])}</span></div>`);
+        det += `<div style="margin-top:15px;"><b>SMILES:</b><div style="background:#f1f5f9; padding:8px; border-radius:4px; font-size:11px; word-break:break-all;">${hit.smiles||hit.SMILES||''}</div></div>`;
+        document.getElementById('mol-details').innerHTML = det;
+    }
 
-        document.getElementById('mol-id').innerText = displayId;
-        
-        const imgEl = document.getElementById('mol-image');
-        if(hit.mol_image) {
-            imgEl.src = hit.mol_image;
-            imgEl.style.display = 'block';
-        } else {
-            imgEl.style.display = 'none';
-        }
-        
-        let detailsHtml = '<hr style="border:0; border-top:1px dashed #cbd5e1; margin:15px 0;">';
-        
-        headers.forEach(key => {
-            const val = formatNumber(hit[key]);
-            detailsHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                                <span style="text-transform:capitalize;"><b>${key}:</b></span>
-                                <span style="color:#0f172a;">${val}</span>
-                            </div>`;
-        });
-
-        let smilesVal = '';
-        for(let key in hit) { if(key.toLowerCase() === 'smiles') { smilesVal = hit[key]; break; } }
-        
-        if(smilesVal) {
-            detailsHtml += `<div style="margin-top:20px; text-align:left;">
-                            <b style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px;">SMILES String</b>
-                            <div style="background:#f1f5f9; color:#334155; padding:10px; border-radius:6px; margin-top:5px; font-family:'Courier New', monospace; font-size:12px; word-break:break-all; border:1px solid #e2e8f0;">
-                                ${smilesVal}
-                            </div></div>`;
-        }
-
-        document.getElementById('mol-details').innerHTML = detailsHtml;
+    function exportCSV() {
+        let csv = ['ID', ...currentHeaders, 'SMILES'].join(',') + '\n' + hitsData.map(h => [h.id, ...currentHeaders.map(c => h[c]), h.smiles].join(',')).join('\n');
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+        a.download = `${currentProject}_export.csv`; a.click();
     }
 </script>
-
 </body>
 </html>
