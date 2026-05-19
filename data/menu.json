@@ -1,0 +1,5 @@
+[
+  { "id": "t2dm_hits", "name": "Tiểu đường T2DM" },
+  { "id": "kinase_hits", "name": "Ức chế Kinase" },
+  { "id": "zinc_top100", "name": "ZINC Database" }
+]
