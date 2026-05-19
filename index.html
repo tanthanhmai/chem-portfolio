@@ -6,25 +6,37 @@
     <style>
         :root { --primary: #1e293b; --accent: #0ea5e9; --bg: #f8fafc; --text: #334155; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
-        #sidebar { width: 260px; background: var(--primary); color: white; padding: 25px 20px; z-index: 10; display: flex; flex-direction: column; }
-        #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .header { padding: 20px 30px; border-bottom: 1px solid #e2e8f0; background: white; }
-        #table-area { flex: 1; overflow-y: auto; padding: 20px 30px; background: white; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { background: #f1f5f9; padding: 14px 12px; text-align: left; position: sticky; top: 0; color: #64748b; text-transform: uppercase; font-size: 12px; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 14px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
-        tr:hover { background: #f0f9ff; }
-        tr.active-row { background: #e0f2fe; border-left: 3px solid var(--accent); }
-        #viewer { width: 400px; background: #f8fafc; padding: 30px; display: flex; flex-direction: column; align-items: center; border-left: 1px solid #e2e8f0; overflow-y: auto;}
-        .mol-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; text-align: center; border: 1px solid #e2e8f0; }
-        img.mol-img { width: 100%; max-width: 350px; height: auto; margin-bottom: 20px; border-radius: 8px; }
-        .badge { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 13px; }
-        #error-msg { color: #ef4444; font-weight: bold; padding: 20px; text-align: center; display: none; }
         
-        /* CSS mới cho các nút Menu */
+        /* Sidebar */
+        #sidebar { width: 260px; background: var(--primary); color: white; padding: 25px 20px; z-index: 10; display: flex; flex-direction: column; }
         .menu-item { padding: 12px; border-radius: 8px; margin-top: 10px; cursor: pointer; transition: 0.2s; color: #94a3b8; word-break: break-word; }
         .menu-item:hover { background: rgba(255,255,255,0.05); color: white; }
         .menu-item.active { background: rgba(255,255,255,0.1); font-weight: 600; border-left: 4px solid var(--accent); color: white; pointer-events: none; }
+        
+        /* Main Area & Header */
+        #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 20px 30px; border-bottom: 1px solid #e2e8f0; background: white; display: flex; justify-content: space-between; align-items: center; }
+        .header-actions { display: flex; gap: 15px; }
+        .search-bar { padding: 8px 15px; border: 1px solid #cbd5e1; border-radius: 6px; width: 200px; outline: none; transition: 0.2s; }
+        .search-bar:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
+        .btn-export { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-export:hover { background: #0284c7; }
+        
+        /* Table */
+        #table-area { flex: 1; overflow-y: auto; padding: 20px 30px; background: white; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background: #f1f5f9; padding: 14px 12px; text-align: left; position: sticky; top: 0; color: #64748b; text-transform: uppercase; font-size: 12px; border-bottom: 2px solid #e2e8f0; cursor: pointer; user-select: none; transition: 0.2s; }
+        th:hover { background: #e2e8f0; color: var(--primary); }
+        td { padding: 14px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+        tr:hover td { background: #f0f9ff; }
+        tr.active-row td { background: #e0f2fe; border-left: 3px solid var(--accent); }
+        .badge { background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 13px; }
+        
+        /* Detail Viewer */
+        #viewer { width: 420px; background: #f8fafc; padding: 30px; display: flex; flex-direction: column; align-items: center; border-left: 1px solid #e2e8f0; overflow-y: auto;}
+        .mol-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; box-sizing: border-box; text-align: center; border: 1px solid #e2e8f0; }
+        img.mol-img { width: 100%; max-width: 350px; height: auto; margin-bottom: 20px; border-radius: 8px; }
+        #error-msg { color: #ef4444; font-weight: bold; padding: 20px; text-align: center; display: none; }
     </style>
 </head>
 <body>
@@ -38,7 +50,11 @@
 
 <div id="main">
     <div class="header">
-        <h2 style="margin:0; font-size: 1.5rem; color: var(--primary);">Virtual Screening Portfolio</h2>
+        <h2 style="margin:0; font-size: 1.5rem; color: var(--primary);">Virtual Screening Dashboard</h2>
+        <div class="header-actions">
+            <input type="text" id="search-input" class="search-bar" placeholder="🔍 TÌm Compound ID..." onkeyup="filterTable()">
+            <button class="btn-export" onclick="exportCSV()">⬇ Tải CSV</button>
+        </div>
     </div>
     <div id="error-msg">❌ Không tìm thấy dữ liệu. Hãy kiểm tra lại đường dẫn!</div>
     <div id="table-area">
@@ -61,47 +77,45 @@
 
 <script>
     let hitsData = [];
+    let currentHeaders = [];
+    let sortCol = null;
+    let sortAsc = true;
+    
     const urlParams = new URLSearchParams(window.location.search);
     const currentProject = urlParams.get('project') || 'hitlist_1'; 
 
+    // --- HÀM TIỆN ÍCH LÀM TRÒN SỐ ---
+    function formatNumber(val) {
+        if (val === null || val === undefined || val === '') return '-';
+        if (!isNaN(val) && val.toString().indexOf('.') !== -1) {
+            return parseFloat(val).toFixed(3); // Làm tròn 3 chữ số thập phân
+        }
+        return val;
+    }
+
     // 1. TẢI MENU
     fetch('data/menu.json')
-        .then(res => {
-            if(!res.ok) throw new Error("No menu.json");
-            return res.json();
-        })
+        .then(res => { if(!res.ok) throw new Error("No menu"); return res.json(); })
         .then(menuItems => {
             const menuContainer = document.getElementById('menu-container');
             menuContainer.innerHTML = ''; 
-            
             menuItems.forEach(item => {
                 const isActive = item.id === currentProject;
                 const div = document.createElement('div');
                 div.className = 'menu-item' + (isActive ? ' active' : '');
                 div.innerHTML = (isActive ? "🎯 " : "📁 ") + item.name;
-                
-                if(!isActive) {
-                    div.onclick = () => { window.location.href = '?project=' + item.id; };
-                }
+                if(!isActive) div.onclick = () => { window.location.href = '?project=' + item.id; };
                 menuContainer.appendChild(div);
             });
-        })
-        .catch(err => {
-            // Backup nếu chưa tạo file menu.json
-            document.getElementById('fallback-menu').innerText = "🎯 " + currentProject.toUpperCase();
-        });
+        }).catch(() => { document.getElementById('fallback-menu').innerText = "🎯 " + currentProject.toUpperCase(); });
 
-    // 2. TẢI DỮ LIỆU JSON DỰ ÁN
+    // 2. TẢI DỮ LIỆU
     fetch(`data/${currentProject}.json`)
-        .then(res => {
-            if (!res.ok) throw new Error('File not found');
-            return res.json();
-        })
+        .then(res => { if (!res.ok) throw new Error('File not found'); return res.json(); })
         .then(data => {
             hitsData = data;
             initDynamicTable();
-        })
-        .catch(err => {
+        }).catch(() => {
             document.getElementById('error-msg').style.display = 'block';
             document.getElementById('table-area').style.display = 'none';
         });
@@ -110,32 +124,51 @@
     function initDynamicTable() {
         if(hitsData.length === 0) return;
         
-        const excludeCols = ['mol_image', 'id', 'smiles'];
-        const headers = ['Compound ID']; 
+        // Dọn dẹp các cột không cần thiết hiện ở bảng chính
+        const excludeCols = ['mol_image', 'id', 'smiles']; 
+        currentHeaders = ['Compound ID']; 
         
         const firstRow = hitsData[0];
         for(let key in firstRow) {
-            if(!excludeCols.includes(key)) headers.push(key);
+            if(!excludeCols.includes(key.toLowerCase())) currentHeaders.push(key);
         }
 
+        renderHeaders();
+        renderTableBody(hitsData);
+    }
+
+    function renderHeaders() {
         const theadRow = document.getElementById('table-head-row');
-        headers.forEach(h => {
+        theadRow.innerHTML = '';
+        currentHeaders.forEach(h => {
             const th = document.createElement('th');
-            th.innerText = h;
+            let icon = '';
+            if (sortCol === h) { icon = sortAsc ? ' ▲' : ' ▼'; }
+            th.innerText = h + icon;
+            th.onclick = () => sortTable(h);
             theadRow.appendChild(th);
         });
+    }
 
+    function renderTableBody(dataToRender) {
         const tbody = document.getElementById('table-body');
-        hitsData.forEach((hit, index) => {
+        tbody.innerHTML = '';
+        
+        dataToRender.forEach((hit, index) => {
             const tr = document.createElement('tr');
             tr.id = `row-${index}`;
             
-            const displayId = hit.id || hit.ID || `HIT_${index+1}`;
+            // Xử lý ID
+            let displayId = '';
+            for(let key in hit) { if(key.toLowerCase() === 'id') { displayId = hit[key]; break; } }
+            if(!displayId) displayId = `HIT_${index+1}`;
+            
             let rowHtml = `<td><span class="badge">${displayId}</span></td>`;
             
-            headers.slice(1).forEach(key => {
-                const val = hit[key] !== null && hit[key] !== undefined ? hit[key] : '-';
-                if(key.toLowerCase().includes('energy') || key.toLowerCase().includes('score')) {
+            // Xử lý các cột còn lại (Làm tròn số)
+            currentHeaders.slice(1).forEach(key => {
+                const val = formatNumber(hit[key]);
+                if(key.toLowerCase().includes('energy') || key.toLowerCase().includes('score') || key.toLowerCase().includes('pic50')) {
                     rowHtml += `<td style="color:#0369a1; font-weight:700;">${val}</td>`;
                 } else {
                     rowHtml += `<td>${val}</td>`;
@@ -143,15 +176,83 @@
             });
 
             tr.innerHTML = rowHtml;
-            tr.onclick = () => renderMolecule(hit, tr, displayId, headers);
+            tr.onclick = () => renderMolecule(hit, tr, displayId, currentHeaders);
             tbody.appendChild(tr);
         });
 
-        const firstId = hitsData[0].id || hitsData[0].ID || 'HIT_1';
-        renderMolecule(hitsData[0], document.getElementById('row-0'), firstId, headers);
+        // Tự động load phân tử đầu tiên nếu có dữ liệu
+        if(dataToRender.length > 0) {
+            let firstId = '';
+            for(let key in dataToRender[0]) { if(key.toLowerCase() === 'id') { firstId = dataToRender[0][key]; break; } }
+            if(!firstId) firstId = 'HIT_1';
+            renderMolecule(dataToRender[0], tbody.firstChild, firstId, currentHeaders);
+        }
     }
 
-    // 4. HIỂN THỊ CẤU TRÚC
+    // 4. SẮP XẾP BẢNG
+    function sortTable(header) {
+        if (sortCol === header) {
+            sortAsc = !sortAsc; 
+        } else {
+            sortCol = header;
+            sortAsc = true;
+        }
+        
+        const sortedData = [...hitsData].sort((a, b) => {
+            let valA = header === 'Compound ID' ? (a.id || a.ID || '') : a[header];
+            let valB = header === 'Compound ID' ? (b.id || b.ID || '') : b[header];
+            
+            if (!isNaN(valA) && !isNaN(valB)) {
+                return sortAsc ? valA - valB : valB - valA;
+            }
+            valA = valA ? valA.toString().toLowerCase() : '';
+            valB = valB ? valB.toString().toLowerCase() : '';
+            if (valA < valB) return sortAsc ? -1 : 1;
+            if (valA > valB) return sortAsc ? 1 : -1;
+            return 0;
+        });
+        
+        renderHeaders();
+        renderTableBody(sortedData);
+        // Reset thanh tìm kiếm khi sort
+        document.getElementById('search-input').value = '';
+    }
+
+    // 5. TÌM KIẾM THEO ID
+    function filterTable() {
+        const input = document.getElementById('search-input').value.toLowerCase();
+        const filteredData = hitsData.filter(hit => {
+            let displayId = '';
+            for(let key in hit) { if(key.toLowerCase() === 'id') { displayId = hit[key]; break; } }
+            return displayId.toString().toLowerCase().includes(input);
+        });
+        renderTableBody(filteredData);
+    }
+
+    // 6. XUẤT CSV
+    function exportCSV() {
+        if(hitsData.length === 0) return;
+        let csv = currentHeaders.join(',') + '\n';
+        hitsData.forEach(hit => {
+            let row = [];
+            currentHeaders.forEach(header => {
+                let val = header === 'Compound ID' ? (hit.id || hit.ID || '') : hit[header];
+                row.push(`"${val}"`);
+            });
+            csv += row.join(',') + '\n';
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${currentProject}_export.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // 7. HIỂN THỊ CHI TIẾT
     function renderMolecule(hit, rowElement, displayId, headers) {
         document.querySelectorAll('tr').forEach(r => r.classList.remove('active-row'));
         if(rowElement) rowElement.classList.add('active-row');
@@ -167,18 +268,26 @@
         }
         
         let detailsHtml = '<hr style="border:0; border-top:1px dashed #cbd5e1; margin:15px 0;">';
+        
+        // Chỉ in ra các thông số điểm (Lọc bỏ ID và SMILES bị trùng lặp)
         headers.slice(1).forEach(key => {
-            const val = hit[key] !== null && hit[key] !== undefined ? hit[key] : '-';
-            detailsHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span style="text-transform:capitalize;"><b>${key}:</b></span>
-                                <span>${val}</span>
-                            </div>`;
+            if (key.toLowerCase() !== 'id' && key.toLowerCase() !== 'smiles') {
+                const val = formatNumber(hit[key]);
+                detailsHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                                    <span style="text-transform:capitalize;"><b>${key}:</b></span>
+                                    <span style="color:#0f172a;">${val}</span>
+                                </div>`;
+            }
         });
 
-        const smilesVal = hit.smiles || hit.SMILES || '';
+        // Tách biệt SMILES xuống cuối cùng, highlight đẹp mắt
+        let smilesVal = '';
+        for(let key in hit) { if(key.toLowerCase() === 'smiles') { smilesVal = hit[key]; break; } }
+        
         if(smilesVal) {
-            detailsHtml += `<div style="margin-top:15px;"><b style="font-size:12px; color:#94a3b8;">SMILES:</b>
-                            <div style="background:#f1f5f9; padding:8px; border-radius:6px; margin-top:5px; font-family:monospace; font-size:11px; word-break:break-all;">
+            detailsHtml += `<div style="margin-top:20px; text-align:left;">
+                            <b style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px;">SMILES String</b>
+                            <div style="background:#f1f5f9; color:#334155; padding:10px; border-radius:6px; margin-top:5px; font-family:'Courier New', monospace; font-size:12px; word-break:break-all; border:1px solid #e2e8f0;">
                                 ${smilesVal}
                             </div></div>`;
         }
